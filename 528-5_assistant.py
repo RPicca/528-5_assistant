@@ -1,10 +1,12 @@
 import win32com.client
-import math
 import subprocess
+# import numpy as np
+import math
 # Pour utiliser cette macro : Placer le site Target à l'emplacement à étudier et sélectionner l'émetteur (XG) à étudier
+# Régler la valeur du time percentage
 # Lancer la macro => on obtient la valeur du pathloss
 
-time_percent = 1
+time_percent = 99
 exe_path = "\\\\sisyphe\\TestsStorage\\Tests_Addins\\Products\ITU528-5\\Executables\\P528Drvr_x86.exe"
 
 
@@ -37,13 +39,24 @@ def AtollMacro_528_point_analysis():
             # On récup les infos sur l'emplacement du site Target
             [target_X, target_Y] = site_table.GetValues([target_row], ["LONGITUDE", "LATITUDE"])[1][1:3]
 
-            distance = math.dist([tx_X, tx_Y], [target_X, target_Y])
-
             rx_table = win32com.client.dynamic.Dispatch(doc.GetRecords("receivers", True))
             rx_row = rx_table.FindPrimaryKey("LTE")
             rx_height = rx_table.GetValue(rx_row, "HEIGHT")
+
+            distance = distance_grand_cercle([tx_X, tx_Y, tx_total_height], [target_X, target_Y, rx_height])
+            print(f"Distance : {distance}")
             # Execute le programme d'ITU avec les bons arguments
             options = ["-mode", "POINT", "-h1", str(tx_total_height), "-h2", str(rx_height),
                        "-f", str(freq), "-p", str(time_percent), "-tpol", "1", "-d", str(distance / 1000)]
             result = subprocess.run([exe_path] + options, check=True, capture_output=True, text=True)
             print(result.stdout.split("\n")[1])
+
+
+def distance_grand_cercle(Tx, Rx):
+    a0 = 6371000
+    # Distance au sol entre Tx et Rx
+    dist = math.dist(Tx[:2], Rx[:2])
+    # Pythagore sur le triangle isocele depuis le centre de la terre vers le Tx et le Rx
+    triangle_height_length = math.sqrt(a0**2 - (dist / 2)**2)
+    tan_phi = dist / 2 / triangle_height_length
+    return math.atan(tan_phi) * 2 * a0
