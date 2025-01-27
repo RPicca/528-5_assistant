@@ -1,6 +1,5 @@
 import win32com.client
 import subprocess
-# import numpy as np
 import math
 # Pour utiliser cette macro : Placer le site Target à l'emplacement à étudier et sélectionner l'émetteur (XG) à étudier
 # Régler la valeur du time percentage
@@ -29,8 +28,8 @@ def AtollMacro_528_point_analysis():
             # On récup les infos du site du tx
             tx_site_row = site_table.FindPrimaryKey(tx_site)
             # altitude récupérée en formattée sinon égale à None
-            tx_site_height = int(site_table.GetFormattedValue(
-                tx_site_row, "ALTITUDE").replace("[", "").replace("]", ""))
+            tx_site_height = float(site_table.GetFormattedValue(
+                tx_site_row, "ALTITUDE").replace("[", "").replace("]", "").replace(",", ""))
             tx_total_height = tx_site_height + antenna_height
             # On récup la fréquence centrale de l'émetteur
             f_table = win32com.client.dynamic.Dispatch(doc.GetRecords("xgfreqbands", True))
