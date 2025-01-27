@@ -1,5 +1,5 @@
 Pour utiliser la macro : 
-- Régler à la main la valeur de time_percent
+- Régler à la main la valeur de time_percentage/Polarisation dans le modèle
 - Dans Atoll
     - Ajouter un site Target à l'endroit où le calcul doit être fait
     - Selectionner un site
