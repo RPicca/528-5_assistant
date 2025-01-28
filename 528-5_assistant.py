@@ -36,7 +36,6 @@ def AtollMacro_528_point_analysis():
             if event == sg.WIN_CLOSED:
                 break
             if event == "Run":
-                print(values["polar"])
                 if values["polar"] == "Horizontal":
                     polari = 0
                 else:
@@ -45,7 +44,7 @@ def AtollMacro_528_point_analysis():
 
 
 def exec_ITU(options):
-    if options!=[]:
+    if options != []:
         result = subprocess.run([exe_path] + options, check=True, capture_output=True, text=True)
         print(result.stdout.split("\n")[1])
 
