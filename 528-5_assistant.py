@@ -1,22 +1,63 @@
 import win32com.client
 import subprocess
 import math
+gui = True
+try:
+    import PySimpleGUI as sg
+except ImportError:
+    gui = False
+
 # Pour utiliser cette macro : Placer le site Target à l'emplacement à étudier et sélectionner l'émetteur (XG) à étudier
 # Régler la valeur du time percentage
 # Lancer la macro => on obtient la valeur du pathloss
 
-time_percent = 99
+# ======================================Config=======================================================
+time_percentage = 75
+# 1 pour verical, 0 pour horizontal
+polar = 0
+target_site = "Target"
 exe_path = "\\\\sisyphe\\TestsStorage\\Tests_Addins\\Products\ITU528-5\\Executables\\P528Drvr_x86.exe"
+# ====================================================================================================
 
 
 def AtollMacro_528_point_analysis():
+    if not gui:
+        exec_ITU(get_params())
+    else:
+        layout = [
+            [sg.Text("time_percentage"), sg.Input(50, key="p")],
+            [sg.Text("Polarisation"), sg.Combo(["Horizontal", "Vertical"], default_value='Horizontal', key="polar")],
+            [sg.Text("Site to analyze"), sg.Input("Target", key="target")],
+            [sg.Button('Run')]
+        ]
+        window = sg.Window('ITU528-5 GUI', layout)
+        while True:
+            event, values = window.read()
+            if event == sg.WIN_CLOSED:
+                break
+            if event == "Run":
+                print(values["polar"])
+                if values["polar"] == "Horizontal":
+                    polari = 0
+                else:
+                    polari = 1
+                exec_ITU(get_params(time_percent=float(values["p"]), Polarization=polari, target=values["target"]))
+
+
+def exec_ITU(options):
+    if options!=[]:
+        result = subprocess.run([exe_path] + options, check=True, capture_output=True, text=True)
+        print(result.stdout.split("\n")[1])
+
+
+def get_params(time_percent=time_percentage, Polarization=polar, target=target_site):
     doc = win32com.client.dynamic.Dispatch(Atoll.ActiveDocument)
     site_table = win32com.client.dynamic.Dispatch(doc.GetRecords("Sites", False))
-    target_row = site_table.FindPrimaryKey("Target")
+    target_row = site_table.FindPrimaryKey(target)
     tx = doc.Selection
     tx_table = win32com.client.dynamic.Dispatch(doc.GetRecords("XGTransmitters", True))
     if tx == None or target_row == -1:
-        print("Selectionner un émetteur et positionner le site Target avant de lancer la macro")
+        print(f"Selectionner un émetteur et positionner le site {target} avant de lancer la macro")
     else:
         tx_row = tx_table.FindPrimaryKey(tx.Name)
         if tx_row == -1:
@@ -46,9 +87,9 @@ def AtollMacro_528_point_analysis():
             print(f"Distance : {distance}")
             # Execute le programme d'ITU avec les bons arguments
             options = ["-mode", "POINT", "-h1", str(tx_total_height), "-h2", str(rx_height),
-                       "-f", str(freq), "-p", str(time_percent), "-tpol", "1", "-d", str(distance / 1000)]
-            result = subprocess.run([exe_path] + options, check=True, capture_output=True, text=True)
-            print(result.stdout.split("\n")[1])
+                       "-f", str(freq), "-p", str(time_percent), "-tpol", str(Polarization), "-d", str(distance / 1000)]
+            return options
+    return []
 
 
 def distance_grand_cercle(Tx, Rx):
